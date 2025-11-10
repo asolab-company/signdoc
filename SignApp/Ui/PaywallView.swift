@@ -64,7 +64,7 @@ struct PaywallView: View {
                                     spacing: 12
                                 ) {
                                     Text("Continue with limitations")
-                                        .foregroundColor(Color.black)
+                                        .foregroundColor(Color(hex: "8E8E8E"))
                                         .font(
                                             .system(size: 18, weight: .regular)
                                         )
