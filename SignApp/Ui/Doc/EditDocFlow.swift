@@ -29,7 +29,7 @@ struct EditDocFlow: View {
             .onAppear {
                 if pages.isEmpty {
                     pages = images
-                    LOG("DOCFLOW", "init pages=\(pages.count)")
+                  
                 }
             }
             .navigationDestination(for: Route.self) { route in
@@ -39,21 +39,15 @@ struct EditDocFlow: View {
                     SignView(
                         images: pages,
                         onBack: {
-                            LOG("DOCFLOW", "SignView.onBack -> pop")
+                          
                             path.removeLast()
                         },
                         onCreateSignature: {
-                            LOG(
-                                "DOCFLOW",
-                                "SignView.onCreateSignature -> ask ScanView to switch"
-                            )
+                      
                             onOpenSignatureScanner()
                         },
                         onSaved: { url in
-                            LOG(
-                                "DOCFLOW",
-                                "PDF saved: \(url.lastPathComponent)"
-                            )
+                          
                             path.append(.success(url))
                         }
                     )
