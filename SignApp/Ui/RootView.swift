@@ -9,28 +9,25 @@ struct RootView: View {
     @State private var phase: Phase = .splash
     @State private var path: [Route] = []
 
-    @AppStorage("didShowOnboarding") private var didShowOnboarding = false
-
     var body: some View {
         content
             .navigationBarBackButtonHidden(true)
             .environmentObject(iap)
             .environmentObject(overlay)
-
             .fullScreenCover(
-                isPresented: Binding(
-                    get: { overlay.showPaywall && phase == .menu },
-                    set: { overlay.showPaywall = $0 }
-                ),
+                isPresented: $overlay.showPaywall,
                 onDismiss: { phase = .menu }
             ) {
-                PaywallView(onContinue: {
-                    overlay.showPaywall = false
-                    phase = .menu
-                })
+                PaywallView(
+                    onContinue: {
+                        overlay.showPaywall = false
+                        phase = .menu
+                    }
+                )
                 .environmentObject(iap)
                 .environmentObject(overlay)
             }
+
             .onChange(of: iap.isSubscribed) { sub in
                 if sub { overlay.showPaywall = false }
             }
@@ -40,23 +37,26 @@ struct RootView: View {
     private var content: some View {
         switch phase {
         case .splash:
-            Loading()
+            LoadingView()
+                .onAppear {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                        let didShow = UserDefaults.standard.bool(
+                            forKey: "didShowOnboarding"
+                        )
+                        if didShow {
 
-                .task {
-
-                    try? await Task.sleep(nanoseconds: 1_600_000_000)
-
-                    if didShowOnboarding {
-                        phase = .menu
-                        if !iap.isSubscribed { overlay.showPaywall = true }
-                    } else {
-                        phase = .onboarding
+                            phase = .menu
+                            if !iap.isSubscribed { overlay.showPaywall = true }
+                        } else {
+                            phase = .onboarding
+                        }
                     }
                 }
 
         case .onboarding:
             OnBoardingView(onFinish: {
-                didShowOnboarding = true
+                UserDefaults.standard.set(true, forKey: "didShowOnboarding")
+
                 phase = .menu
                 if !iap.isSubscribed { overlay.showPaywall = true }
             })
@@ -83,10 +83,7 @@ struct RootView: View {
                         PDFSignView(
                             onClose: { safePop() },
                             onOpenSignatureFlow: {
-                                LOG(
-                                    "ROOT",
-                                    "from .signDocuments → open ScanView(.signature)"
-                                )
+
                                 safePop()
                                 DispatchQueue.main.asyncAfter(
                                     deadline: .now() + 0.1
@@ -102,18 +99,12 @@ struct RootView: View {
                             kind: .document,
                             onClose: { safePop() },
                             onOpenSignatureFlow: {
-                                LOG(
-                                    "ROOT",
-                                    "from .scanDocuments → open ScanView(.signature)"
-                                )
+
                                 safePop()
                                 DispatchQueue.main.asyncAfter(
                                     deadline: .now() + 0.1
                                 ) {
-                                    LOG(
-                                        "ROOT",
-                                        "push .createSignature (after pop)"
-                                    )
+
                                     path.append(.createSignature)
                                 }
                             }
@@ -126,16 +117,19 @@ struct RootView: View {
     }
 
     private func safePop(_ n: Int = 1) {
-        LOG("ROOT", "safePop(\(n)) — path.count=\(path.count)")
+
         guard n > 0, path.count >= n else {
-            LOG("ROOT", "safePop blocked (insufficient stack)")
+
             return
         }
         path.removeLast(n)
-        LOG("ROOT", "after pop — path.count=\(path.count)")
+
     }
 }
 
 enum Route: Hashable {
-    case settings, createSignature, signDocuments, scanDocuments
+    case settings
+    case createSignature
+    case signDocuments
+    case scanDocuments
 }
