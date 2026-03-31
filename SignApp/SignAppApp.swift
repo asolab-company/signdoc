@@ -82,7 +82,6 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
         af.delegate = self
         af.waitForATTUserAuthorization(timeoutInterval: 60)
 
-        // Listen for a post-Onboarding signal to request ATT when UI is visible
         NotificationCenter.default.addObserver(
             forName: .requestATT,
             object: nil,

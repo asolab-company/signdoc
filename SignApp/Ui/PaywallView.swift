@@ -58,7 +58,7 @@ struct PaywallView: View {
                             BulletRow("Sign any document")
                             BulletRow("Authentic digital signing")
 
-                            Button(action: { dismiss() }) {
+                            Button(action: closePaywall) {
                                 HStack(
                                     alignment: .firstTextBaseline,
                                     spacing: 12
@@ -143,8 +143,7 @@ struct PaywallView: View {
     private func continueTapped() {
 
         if iap.isSubscribed {
-            onContinue()
-            dismiss()
+            closePaywall()
             return
         }
 
@@ -156,10 +155,14 @@ struct PaywallView: View {
         Task {
             await iap.purchase(product: p)
             if iap.isSubscribed {
-                onContinue()
-                dismiss()
+                closePaywall()
             }
         }
+    }
+
+    private func closePaywall() {
+        onContinue()
+        dismiss()
     }
 
     private func periodString(_ p: Product.SubscriptionPeriod) -> String {

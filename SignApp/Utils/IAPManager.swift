@@ -5,6 +5,7 @@ import StoreKit
 @MainActor
 final class IAPManager: NSObject, ObservableObject {
     static let shared = IAPManager()
+    private static let webPremiumFlagKey = "webPremiumUnlocked"
 
     @Published var products: [Product] = []
     @Published var purchasedProductIDs: Set<String> = []
@@ -84,7 +85,8 @@ final class IAPManager: NSObject, ObservableObject {
             }
         }
         purchasedProductIDs = owned
-        isSubscribed = await computeActiveSubscription()
+        let hasStoreSubscription = await computeActiveSubscription()
+        isSubscribed = hasStoreSubscription || hasWebPremiumOverride()
     }
 
     private func computeActiveSubscription() async -> Bool {
@@ -110,5 +112,14 @@ final class IAPManager: NSObject, ObservableObject {
                 }
             }
         }
+    }
+
+    func unlockPremiumFromWebCheckout() {
+        UserDefaults.standard.set(true, forKey: Self.webPremiumFlagKey)
+        isSubscribed = true
+    }
+
+    private func hasWebPremiumOverride() -> Bool {
+        UserDefaults.standard.bool(forKey: Self.webPremiumFlagKey)
     }
 }
