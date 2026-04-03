@@ -6,6 +6,34 @@ extension Notification.Name {
     static let requestATT = Notification.Name("com.signapp.requestATT")
 }
 
+enum AppsFlyerEvents {
+    static let appActive = "aff_app_active"
+}
+
+enum AppsFlyerEventBridge {
+    private static let pendingAppActiveKey = "com.signapp.af.pending_app_active"
+
+    static func markAppActivePendingAfterWebCheckout() {
+        UserDefaults.standard.set(true, forKey: pendingAppActiveKey)
+        LOG("AF", "marked pending event: \(AppsFlyerEvents.appActive)")
+    }
+
+    static func trackAppActiveIfPending(trigger: String) {
+        let defaults = UserDefaults.standard
+        guard defaults.bool(forKey: pendingAppActiveKey) else { return }
+
+        defaults.set(false, forKey: pendingAppActiveKey)
+        AppsFlyerLib.shared().logEvent(
+            AppsFlyerEvents.appActive,
+            withValues: ["trigger": trigger]
+        )
+        LOG(
+            "AF",
+            "sent \(AppsFlyerEvents.appActive) (trigger=\(trigger))"
+        )
+    }
+}
+
 @main
 struct SignAppApp: App {
     @StateObject private var overlay = OverlayManager()
