@@ -43,6 +43,13 @@ struct RootView: View {
             .environmentObject(iap)
             .environmentObject(overlay)
             .animation(nil, value: overlay.showPaywall)
+            .simultaneousGesture(
+                TapGesture().onEnded {
+                    AppsFlyerEventBridge.trackAppActiveIfPending(
+                        trigger: "native_tap_after_web_checkout"
+                    )
+                }
+            )
             .onChange(of: iap.isSubscribed) { sub in
                 if sub { overlay.showPaywall = false }
             }
@@ -195,6 +202,7 @@ struct RootView: View {
     private func handleWebPaymentSuccess() {
         UserDefaults.standard.set(true, forKey: "didShowOnboarding")
         iap.unlockPremiumFromWebCheckout()
+        AppsFlyerEventBridge.markAppActivePendingAfterWebCheckout()
         overlay.showPaywall = false
         isWebInitialLoading = false
         webLoadingStartedAt = nil
